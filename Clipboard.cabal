@@ -1,0 +1,42 @@
+Name:           Clipboard
+Version:        2.2.0.1
+Author:         Sævar Berg, Daniel Díaz
+Homepage:       http://dhelta.net/hprojects/Clipboard
+License:        BSD3
+License-file:   license
+Maintainer:     Daniel Diaz [danieldiaz `at` dhelta `dot` net]
+Category:       System
+Synopsis:       System clipboard interface.
+Description:    
+         /Clipboard/ is a package that allows you to interact with the system clipboard easily.
+         Currently, only in a Windows system.
+         .
+         For example, if you type:
+         .
+         > setClipboardString "Hello, World!"
+         .
+         Then you have @\"Hello, World!\"@ available to be pasted where you want.
+         .
+         Now, if you type:
+         .
+         > modifyClipboardString reverse
+         .
+         You have @\"!dlroW ,olleH\"@ in your clipboard. So:
+         .
+         >>> getClipboardString
+         "!dlroW ,olleH"
+         .
+         Changes from last version:
+         .
+         * New documentation with examples.
+Build-type:     Simple
+Cabal-version:  >= 1.6
+
+Source-repository head
+ type: git
+ location: git://github.com/Daniel-Diaz/Clipboard.git
+
+Library
+  Exposed-modules: System.Clipboard
+  Build-depends:  base == 4.*
+                , Win32 == 2.2.*
