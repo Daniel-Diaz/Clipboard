@@ -1,4 +1,4 @@
--- | Interface to the system clipboard.
+-- | System clipboard interface with unicode support.
 --
 -- For more information, see "Graphics.Win32.GDI.Clip"
 -- or documentation for /GetClipboardData/ on MSDN.
