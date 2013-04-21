@@ -1,13 +1,12 @@
 Name:           Clipboard
 Version:        2.2.0.2
 Author:         Sævar Berg, Daniel Díaz
-Homepage:       http://dhelta.net/hprojects/Clipboard
+Homepage:       http://haskell.org/haskellwiki/Clipboard
 License:        BSD3
 License-file:   license
 Maintainer:     Daniel Díaz [dhelta `dot` diaz `at` gmail `dot` com]
 Category:       System
 Stability:      Stable
-Portability:    Only Windows
 Synopsis:       System clipboard interface.
 Bug-reports:    https://github.com/Daniel-Diaz/Clipboard/issues
 Description:    
@@ -38,5 +37,9 @@ Source-repository head
 
 Library
   Exposed-modules: System.Clipboard
-  Build-depends:  base == 4.*
-                , Win32 == 2.2.*
+  Extensions: CPP
+  if os(windows)
+    Build-depends:  base == 4.*
+                  , Win32 == 2.2.*
+  else
+    Build-depends:  base == 4.*

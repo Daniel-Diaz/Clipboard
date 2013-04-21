@@ -1,15 +1,29 @@
+
+{-# LANGUAGE CPP #-}
+
 -- | System clipboard interface with unicode support.
 --
 -- For more information, see "Graphics.Win32.GDI.Clip"
 -- or documentation for /GetClipboardData/ on MSDN.
 module System.Clipboard
-    ( -- * Clipboard interface
+    ( 
+#if defined(mingw32_HOST_OS) || defined(__MINGW32__)
+      -- * Clipboard interface
       setClipboardString
-    , getClipboardString 
+    , getClipboardString
     , modifyClipboardString
       -- * Clipboard format
     , cF_UNICODETEXT
+#else
+      -- * Undefined
+
+      -- | This library currently only works in Windows.
+      --   If you want to contribute, please, don't hesitate
+      --   in visit the Git repository at <https://github.com/Daniel-Diaz/Clipboard>.
+#endif
     ) where
+
+#if defined(mingw32_HOST_OS) || defined(__MINGW32__)
 
 import System.Win32.Mem 
     (globalAlloc, globalLock, globalUnlock, copyMemory, gHND)
@@ -79,3 +93,5 @@ modifyClipboardString f = do
  case s of
    Nothing -> return False
    Just sc -> setClipboardString (f sc) >> return True
+
+#endif
