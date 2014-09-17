@@ -1,5 +1,5 @@
 Name:           Clipboard
-Version:        2.2.0.2
+Version:        2.2.0.3
 Author:         Sævar Berg, Daniel Díaz
 Homepage:       http://haskell.org/haskellwiki/Clipboard
 License:        BSD3
@@ -40,6 +40,6 @@ Library
   Extensions: CPP
   if os(windows)
     Build-depends:  base == 4.*
-                  , Win32 == 2.2.*
+                  , Win32 >= 2.2.0.0 && < 2.4
   else
     Build-depends:  base == 4.*
