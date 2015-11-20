@@ -45,4 +45,5 @@ Library
   else
     Build-depends:  base == 4.*
                   , X11 == 1.6.*
+                  , utf8-string
     Other-modules:   System.Clipboard.X11
