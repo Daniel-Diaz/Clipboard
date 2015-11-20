@@ -27,4 +27,8 @@ getClipboardString = OS.getClipboardString
 -- If the clipboard has /textual/ data, this function modifies its content,
 -- and return 'True'. Otherwise, it does nothing and return 'False'.
 modifyClipboardString :: (String -> String) -> IO Bool
-modifyClipboardString = OS.modifyClipboardString
+modifyClipboardString f = do
+ s <- getClipboardString
+ case s of
+   Nothing -> return False
+   Just sc -> setClipboardString (f sc) >> return True

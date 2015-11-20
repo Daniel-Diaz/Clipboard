@@ -1,7 +1,6 @@
 module System.Clipboard.X11
 ( getClipboardString
 , setClipboardString
-, modifyClipboardString
 ) where
 
 import Control.Monad
@@ -12,7 +11,6 @@ import Data.Functor
 import Codec.Binary.UTF8.String
 
 setClipboardString = undefined
-modifyClipboardString = undefined
 
 getClipboardString :: IO (Maybe String)
 getClipboardString = withInitialSetup $ \display window -> do

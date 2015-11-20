@@ -6,7 +6,6 @@ module System.Clipboard.Windows
     (
       setClipboardString
     , getClipboardString
-    , modifyClipboardString
     ) where
 
 import System.Win32.Mem
@@ -61,10 +60,3 @@ getClipboardString =
                          globalUnlock mem
                          return $ Just str
                  else return Nothing
-
-modifyClipboardString :: (String -> String) -> IO Bool
-modifyClipboardString f = do
- s <- getClipboardString
- case s of
-   Nothing -> return False
-   Just sc -> setClipboardString (f sc) >> return True
