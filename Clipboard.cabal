@@ -41,9 +41,10 @@ Library
   if os(windows)
     Build-depends:  base == 4.*
                   , Win32 >= 2.2.0.0 && < 2.4
-    Other-modules:   System.Clipboard.Windows
+    Other-modules:  System.Clipboard.Windows
   else
     Build-depends:  base == 4.*
                   , X11 == 1.6.*
                   , utf8-string
-    Other-modules:   System.Clipboard.X11
+                  , unix
+    Other-modules:  System.Clipboard.X11
