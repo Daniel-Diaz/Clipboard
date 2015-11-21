@@ -11,7 +11,7 @@ Synopsis:       System clipboard interface.
 Bug-reports:    https://github.com/Daniel-Diaz/Clipboard/issues
 Description:    
          /Clipboard/ is a library for easily interfacing with the system clipboard with additional unicode support.
-         Currently, only in a Windows system.
+         Currently, only in a Windows or GNU/Linux (X11) system.
          .
          For example, if you type:
          .
@@ -41,5 +41,10 @@ Library
   if os(windows)
     Build-depends:  base == 4.*
                   , Win32 >= 2.2.0.0 && < 2.4
+    Other-modules:  System.Clipboard.Windows
   else
     Build-depends:  base == 4.*
+                  , X11 == 1.6.*
+                  , utf8-string
+                  , unix
+    Other-modules:  System.Clipboard.X11
