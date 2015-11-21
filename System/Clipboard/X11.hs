@@ -10,6 +10,7 @@ import System.Posix.Process (forkProcess)
 import Data.Maybe
 import Data.Functor
 import Control.Monad
+import System.IO (hClose, stdin, stdout, stderr)
 import Foreign.C.Types (CChar, CUChar)
 import Foreign.Marshal.Array (withArrayLen)
 import Codec.Binary.UTF8.String (decode, encode)
@@ -35,6 +36,9 @@ charsToString = decode . map fromIntegral
 setClipboardString :: String -> IO ()
 setClipboardString str = void $ forkProcess $
     withInitialSetup $ \display window clipboard -> do
+        hClose stdin
+        hClose stdout
+        hClose stderr
         xSetSelectionOwner display clipboard window currentTime
         clipboardOutputWait display $ stringToChars str
 
