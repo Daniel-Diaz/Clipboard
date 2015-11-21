@@ -10,16 +10,21 @@ import System.Posix.Process (forkProcess)
 import Data.Maybe
 import Data.Functor
 import Control.Monad
+import System.IO (hClose, stdin, stdout, stderr)
+import System.Directory (setCurrentDirectory)
 import Foreign.C.Types (CChar, CUChar)
 import Foreign.Marshal.Array (withArrayLen)
 import Codec.Binary.UTF8.String (decode, encode)
 
 getClipboardString :: IO (Maybe String)
-getClipboardString = withInitialSetup $ \display window clipboard -> do
+getClipboardString = do
+    (display, window, clipboard) <- initialSetup
     inp <- internAtom display "clipboard_get" False
     target <- internAtom display "UTF8_STRING" True
     xConvertSelection display clipboard target inp window currentTime
-    clipboardInputWait display window inp
+    ret <- clipboardInputWait display window inp
+    cleanup display window
+    return ret
 
 clipboardInputWait :: Display -> Window -> Atom -> IO (Maybe String)
 clipboardInputWait display window inp = do
@@ -33,10 +38,16 @@ charsToString = decode . map fromIntegral
 
 
 setClipboardString :: String -> IO ()
-setClipboardString str = void $ forkProcess $
-    withInitialSetup $ \display window clipboard -> do
-        xSetSelectionOwner display clipboard window currentTime
+setClipboardString str = do
+    (display, window, clipboard) <- initialSetup
+    xSetSelectionOwner display clipboard window currentTime
+    void $ forkProcess $ do
+        hClose stdin
+        hClose stdout
+        hClose stderr
+        setCurrentDirectory "/"
         clipboardOutputWait display $ stringToChars str
+        cleanup display window
 
 clipboardOutputWait :: Display -> [CUChar] -> IO ()
 clipboardOutputWait display str = do
@@ -76,16 +87,18 @@ stringToChars :: String -> [CUChar]
 stringToChars = map fromIntegral . encode
 
 
-withInitialSetup :: (Display -> Window -> Atom -> IO a) -> IO a
-withInitialSetup f = do
+initialSetup :: IO (Display, Window, Atom)
+initialSetup = do
     display <- openDisplay ""
     window <- createSimpleWindow display (defaultRootWindow display)
                                  0 0 1 1 0 0 0
     clipboard <- internAtom display "CLIPBOARD" True
-    ret <- f display window clipboard
+    return (display, window, clipboard)
+
+cleanup :: Display -> Window -> IO ()
+cleanup display window = do
     destroyWindow display window
     closeDisplay display
-    return ret
 
 getNextEvent :: Display -> IO Event
 getNextEvent display = allocaXEvent $ \ev -> do
