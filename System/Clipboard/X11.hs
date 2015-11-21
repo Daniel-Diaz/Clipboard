@@ -11,6 +11,7 @@ import Data.Maybe
 import Data.Functor
 import Control.Monad
 import System.IO (hClose, stdin, stdout, stderr)
+import System.Directory (setCurrentDirectory)
 import Foreign.C.Types (CChar, CUChar)
 import Foreign.Marshal.Array (withArrayLen)
 import Codec.Binary.UTF8.String (decode, encode)
@@ -44,6 +45,7 @@ setClipboardString str = do
         hClose stdin
         hClose stdout
         hClose stderr
+        setCurrentDirectory "/"
         clipboardOutputWait display $ stringToChars str
         cleanup display window
 

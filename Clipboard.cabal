@@ -47,4 +47,5 @@ Library
                   , X11 == 1.6.*
                   , utf8-string
                   , unix
+                  , directory
     Other-modules:  System.Clipboard.X11
