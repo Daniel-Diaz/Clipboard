@@ -91,7 +91,7 @@ initialSetup = do
     display <- openDisplay ""
     window <- createSimpleWindow display (defaultRootWindow display)
                                  0 0 1 1 0 0 0
-    clipboards <- internAtom display "CLIPBOARD" True
+    clipboards <- internAtom display "CLIPBOARD" False
     return (display, window, [clipboards, pRIMARY])
 
 cleanup :: Display -> Window -> IO ()
