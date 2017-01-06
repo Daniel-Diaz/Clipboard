@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module System.Clipboard.X11
 ( getClipboardString
 , setClipboardString
@@ -9,12 +11,13 @@ import           System.Posix.Process     (forkProcess)
 
 import           Codec.Binary.UTF8.String (decode, encode)
 import           Control.Monad
-import           Data.Functor
 import           Data.Maybe
+import           Foreign                  (peekByteOff)
 import           Foreign.C.Types          (CChar, CUChar)
 import           Foreign.Marshal.Array    (withArrayLen)
 import           System.Directory         (setCurrentDirectory)
 import           System.IO                (hClose, stderr, stdin, stdout)
+
 
 getClipboardString :: IO (Maybe String)
 getClipboardString = do
@@ -46,24 +49,28 @@ setClipboardString str = do
         hClose stdout
         hClose stderr
         setCurrentDirectory "/"
-        clipboardOutputWait display $ stringToChars str
+        advertiseSelection display clipboards (stringToChars str)
         cleanup display window
 
-clipboardOutputWait :: Display -> [CUChar] -> IO ()
-clipboardOutputWait display str = do
-    let loop = clipboardOutputWait display str
-    ev <- getNextEvent display
-    case ev of
-        SelectionRequest { ev_requestor = req
-                         , ev_target = target
-                         , ev_property = prop
-                         , ev_selection = sel
-                         , ev_time = time} -> do
-            target' <- getAtomName display target
-            res <- handleOutput display req prop target' str
-            sendSelectionNotify display req sel target res time
-            loop
-        _ -> unless (ev_event_type ev == selectionClear) loop
+advertiseSelection :: Display -> [Atom] -> [CUChar] -> IO ()
+advertiseSelection display clipboards' str = allocaXEvent (go clipboards')
+  where
+    go [] _ = return ()
+    go clipboards evPtr = do
+      nextEvent display evPtr
+      ev <- getEvent evPtr
+      case ev of
+          SelectionRequest {..} -> do
+              target' <- getAtomName display ev_target
+              res <- handleOutput display ev_requestor ev_property target' str
+              sendSelectionNotify display ev_requestor ev_selection ev_target res ev_time
+              go clipboards evPtr
+
+          _ | ev_event_type ev == selectionClear -> do
+              target <- peekByteOff evPtr 40 :: IO Atom
+              go (filter (/= target) clipboards) evPtr
+
+          _ -> go clipboards evPtr
 
 handleOutput :: Display -> Window -> Atom -> Maybe String -> [CUChar] -> IO Atom
 handleOutput display req prop (Just "UTF8_STRING") str = do
