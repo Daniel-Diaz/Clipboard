@@ -18,6 +18,9 @@ import Foreign.C.Types          (CChar, CUChar)
 import Foreign.Marshal.Array    (withArrayLen)
 import System.Directory         (setCurrentDirectory)
 import System.IO                (hClose, stderr, stdin, stdout)
+#if !MIN_VERSION_base(4,8,0)
+import Control.Applicative ((<$>))
+#endif
 
 getClipboardString :: IO (Maybe String)
 getClipboardString = do
