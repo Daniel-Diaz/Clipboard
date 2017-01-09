@@ -3,8 +3,7 @@
 -- For more information, see "Graphics.Win32.GDI.Clip"
 -- or documentation for /GetClipboardData/ on MSDN.
 module System.Clipboard.Windows
-    (
-      setClipboardString
+    ( setClipboardString
     , getClipboardString
     ) where
 
