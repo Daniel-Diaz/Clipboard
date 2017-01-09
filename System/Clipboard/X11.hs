@@ -1,27 +1,30 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module System.Clipboard.X11
 ( getClipboardString
 , setClipboardString
 ) where
 
-import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras
-import System.Posix.Process (forkProcess)
+import           Graphics.X11.Xlib
+import           Graphics.X11.Xlib.Extras
+import           System.Posix.Process     (forkProcess)
 
-import Data.Maybe
-import Data.Functor
-import Control.Monad
-import System.IO (hClose, stdin, stdout, stderr)
-import System.Directory (setCurrentDirectory)
-import Foreign.C.Types (CChar, CUChar)
-import Foreign.Marshal.Array (withArrayLen)
-import Codec.Binary.UTF8.String (decode, encode)
+import           Codec.Binary.UTF8.String (decode, encode)
+import           Control.Monad
+import           Data.Maybe
+import           Foreign                  (peekByteOff)
+import           Foreign.C.Types          (CChar, CUChar)
+import           Foreign.Marshal.Array    (withArrayLen)
+import           System.Directory         (setCurrentDirectory)
+import           System.IO                (hClose, stderr, stdin, stdout)
+
 
 getClipboardString :: IO (Maybe String)
 getClipboardString = do
-    (display, window, clipboard) <- initialSetup
+    (display, window, clipboards) <- initialSetup
     inp <- internAtom display "clipboard_get" False
     target <- internAtom display "UTF8_STRING" True
-    xConvertSelection display clipboard target inp window currentTime
+    xConvertSelection display (head clipboards) target inp window currentTime
     ret <- clipboardInputWait display window inp
     cleanup display window
     return ret
@@ -30,7 +33,7 @@ clipboardInputWait :: Display -> Window -> Atom -> IO (Maybe String)
 clipboardInputWait display window inp = do
     ev <- getNextEvent display
     if ev_event_type ev == selectionNotify
-        then (charsToString <$>) <$> getWindowProperty8 display inp window
+        then fmap charsToString <$> getWindowProperty8 display inp window
         else clipboardInputWait display window inp
 
 charsToString :: [CChar] -> String
@@ -39,31 +42,35 @@ charsToString = decode . map fromIntegral
 
 setClipboardString :: String -> IO ()
 setClipboardString str = do
-    (display, window, clipboard) <- initialSetup
-    xSetSelectionOwner display clipboard window currentTime
+    (display, window, clipboards) <- initialSetup
+    mapM_ (\atom -> xSetSelectionOwner display atom window currentTime) clipboards
     void $ forkProcess $ do
         hClose stdin
         hClose stdout
         hClose stderr
         setCurrentDirectory "/"
-        clipboardOutputWait display $ stringToChars str
+        advertiseSelection display clipboards (stringToChars str)
         cleanup display window
 
-clipboardOutputWait :: Display -> [CUChar] -> IO ()
-clipboardOutputWait display str = do
-    let loop = clipboardOutputWait display str
-    ev <- getNextEvent display
-    case ev of
-        SelectionRequest { ev_requestor = req
-                         , ev_target = target
-                         , ev_property = prop
-                         , ev_selection = sel
-                         , ev_time = time} -> do
-            target' <- getAtomName display target
-            res <- handleOutput display req prop target' str
-            sendSelectionNotify display req sel target res time
-            loop
-        _ -> unless (ev_event_type ev == selectionClear) loop
+advertiseSelection :: Display -> [Atom] -> [CUChar] -> IO ()
+advertiseSelection display clipboards' str = allocaXEvent (go clipboards')
+  where
+    go [] _ = return ()
+    go clipboards evPtr = do
+      nextEvent display evPtr
+      ev <- getEvent evPtr
+      case ev of
+          SelectionRequest {..} -> do
+              target' <- getAtomName display ev_target
+              res <- handleOutput display ev_requestor ev_property target' str
+              sendSelectionNotify display ev_requestor ev_selection ev_target res ev_time
+              go clipboards evPtr
+
+          _ | ev_event_type ev == selectionClear -> do
+              target <- peekByteOff evPtr 40 :: IO Atom
+              go (filter (/= target) clipboards) evPtr
+
+          _ -> go clipboards evPtr
 
 handleOutput :: Display -> Window -> Atom -> Maybe String -> [CUChar] -> IO Atom
 handleOutput display req prop (Just "UTF8_STRING") str = do
@@ -86,14 +93,13 @@ sendSelectionNotify display req sel target prop time = allocaXEvent $ \ev -> do
 stringToChars :: String -> [CUChar]
 stringToChars = map fromIntegral . encode
 
-
-initialSetup :: IO (Display, Window, Atom)
+initialSetup :: IO (Display, Window, [Atom])
 initialSetup = do
     display <- openDisplay ""
     window <- createSimpleWindow display (defaultRootWindow display)
                                  0 0 1 1 0 0 0
-    clipboard <- internAtom display "CLIPBOARD" True
-    return (display, window, clipboard)
+    clipboards <- internAtom display "CLIPBOARD" False
+    return (display, window, [clipboards, pRIMARY])
 
 cleanup :: Display -> Window -> IO ()
 cleanup display window = do
