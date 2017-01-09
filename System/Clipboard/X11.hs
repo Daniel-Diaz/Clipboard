@@ -1,23 +1,23 @@
+
 {-# LANGUAGE RecordWildCards #-}
 
 module System.Clipboard.X11
-( getClipboardString
-, setClipboardString
-) where
+  ( getClipboardString
+  , setClipboardString
+  ) where
 
-import           Graphics.X11.Xlib
-import           Graphics.X11.Xlib.Extras
-import           System.Posix.Process     (forkProcess)
+import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
+import System.Posix.Process     (forkProcess)
 
-import           Codec.Binary.UTF8.String (decode, encode)
-import           Control.Monad
-import           Data.Maybe
-import           Foreign                  (peekByteOff)
-import           Foreign.C.Types          (CChar, CUChar)
-import           Foreign.Marshal.Array    (withArrayLen)
-import           System.Directory         (setCurrentDirectory)
-import           System.IO                (hClose, stderr, stdin, stdout)
-
+import Codec.Binary.UTF8.String (decode, encode)
+import Control.Monad
+import Data.Maybe
+import Foreign                  (peekByteOff)
+import Foreign.C.Types          (CChar, CUChar)
+import Foreign.Marshal.Array    (withArrayLen)
+import System.Directory         (setCurrentDirectory)
+import System.IO                (hClose, stderr, stdin, stdout)
 
 getClipboardString :: IO (Maybe String)
 getClipboardString = do
@@ -38,7 +38,6 @@ clipboardInputWait display window inp = do
 
 charsToString :: [CChar] -> String
 charsToString = decode . map fromIntegral
-
 
 setClipboardString :: String -> IO ()
 setClipboardString str = do
@@ -83,8 +82,7 @@ handleOutput display req prop (Just "UTF8_STRING") str = do
         return prop
 handleOutput _ _ _ _ _ = return none
 
-sendSelectionNotify :: Display -> Window -> Atom -> Atom -> Atom -> Time ->
-                           IO ()
+sendSelectionNotify :: Display -> Window -> Atom -> Atom -> Atom -> Time -> IO ()
 sendSelectionNotify display req sel target prop time = allocaXEvent $ \ev -> do
     setEventType ev selectionNotify
     setSelectionNotify ev req sel target prop time
