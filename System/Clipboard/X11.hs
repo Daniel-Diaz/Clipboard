@@ -13,7 +13,6 @@ import System.Posix.Process     (forkProcess)
 import Codec.Binary.UTF8.String (decode, encode)
 import Control.Monad
 import Data.Maybe
-import Foreign                  (peekByteOff)
 import Foreign.C.Types          (CChar, CUChar)
 import Foreign.Marshal.Array    (withArrayLen)
 import System.Directory         (setCurrentDirectory)
@@ -68,9 +67,7 @@ advertiseSelection display clipboards' str = allocaXEvent (go clipboards')
               sendSelectionNotify display ev_requestor ev_selection ev_target res ev_time
               go clipboards evPtr
 
-          _ | ev_event_type ev == selectionClear -> do
-              target <- peekByteOff evPtr 40 :: IO Atom
-              go (filter (/= target) clipboards) evPtr
+          SelectionClear {..} -> go (filter (/= ev_selection) clipboards) evPtr
 
           _ -> go clipboards evPtr
 
