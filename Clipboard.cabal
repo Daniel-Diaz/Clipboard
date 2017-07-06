@@ -48,7 +48,7 @@ Library
     Other-modules:  System.Clipboard.Windows
   else
     Build-depends:  base == 4.*
-                  , X11 >= 1.8
+                  , X11 >= 1.6
                   , utf8-string
                   , unix
                   , directory

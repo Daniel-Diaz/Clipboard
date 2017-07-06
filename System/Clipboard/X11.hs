@@ -1,5 +1,5 @@
 
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards, CPP #-}
 
 module System.Clipboard.X11
   ( getClipboardString
@@ -13,6 +13,9 @@ import System.Posix.Process     (forkProcess)
 import Codec.Binary.UTF8.String (decode, encode)
 import Control.Monad
 import Data.Maybe
+#if !MIN_VERSION_X11(1,8,0)
+import Foreign                  (peekByteOff)
+#endif
 import Foreign.C.Types          (CChar, CUChar)
 import Foreign.Marshal.Array    (withArrayLen)
 import System.Directory         (setCurrentDirectory)
@@ -67,8 +70,13 @@ advertiseSelection display clipboards' str = allocaXEvent (go clipboards')
               sendSelectionNotify display ev_requestor ev_selection ev_target res ev_time
               go clipboards evPtr
 
+#if MIN_VERSION_X11(1,8,0)
           SelectionClear {..} -> go (filter (/= ev_selection) clipboards) evPtr
-
+#else
+          _ | ev_event_type ev == selectionClear -> do
+              target <- peekByteOff evPtr 40 :: IO Atom
+              go (filter (/= target) clipboards) evPtr
+#endif
           _ -> go clipboards evPtr
 
 handleOutput :: Display -> Window -> Atom -> Maybe String -> [CUChar] -> IO Atom
