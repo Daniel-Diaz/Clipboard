@@ -2,7 +2,6 @@
 {-# LANGUAGE CPP #-}
 
 -- | System Clipboard Interface. It should work on both Windows and Unix (X11).
---   The latter is still experimental.
 module System.Clipboard
     ( -- * Clipboard interface
       setClipboardString
@@ -16,18 +15,18 @@ import qualified System.Clipboard.Windows as OS
 import qualified System.Clipboard.X11 as OS
 #endif
 
--- | Writes a string to the clipboard.
+-- | Write a string to the clipboard.
 setClipboardString :: String -> IO ()
 setClipboardString = OS.setClipboardString
 
--- | Gets the contents of the clipboard as a 'String'.
---   Returns 'Nothing' if the clipboard doesn't contain /textual/ data.
+-- | Get the content of the clipboard as a 'String'.
+--   It returns 'Nothing' if the clipboard doesn't contain /textual/ data.
 getClipboardString :: IO (Maybe String)
 getClipboardString = OS.getClipboardString
 
--- | Modifies the clipboard content.
+-- | Modify the clipboard content.
 --   If the clipboard has /textual/ data, this function modifies its content
---   and return 'True'. Otherwise, it does nothing and return 'False'.
+--   and returns 'True'. Otherwise, it does nothing and returns 'False'.
 modifyClipboardString :: (String -> String) -> IO Bool
 modifyClipboardString f = do
  s <- getClipboardString
